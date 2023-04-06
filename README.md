@@ -31,6 +31,8 @@
 
 ### Known Issues
 
+- Timer breaks in 1D elevator
+
 - Timer can appear laggy at times, which seems to be a LiveSplit+Medge issue and not directly related to the component (this seems like it can be temporarily fixed by restarting the game)
 
 - Potential Issue: It is not yet clear if multiple different versions of the binkw32.dll exist in different game installations, Steam and DVD are confirmed to have the same version
