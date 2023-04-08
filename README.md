@@ -33,8 +33,6 @@ Known Issues:
 
 - Timer can appear laggy at times, which seems to be a LiveSplit+Medge issue and not directly related to our component (this seems like it can be temporarily fixed by restarting the game)
 
-- Potential Issue: It is not yet clear if multiple different versions of the binkw32.dll exist in different game installations, Steam and DVD are confirmed to have the same version
-
 Installation:
 
 Put the LiveSplit.MirrorsEdgeLRT.dll in your LiveSplit/Components folder. Then edit your layout and add the component from the control section.
