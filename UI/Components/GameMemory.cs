@@ -5,14 +5,15 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using LiveSplit.ComponentUtil;
 using LiveSplit.Model;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LiveSplit.MirrorsEdgeLRT
 {
     class GameData : MemoryWatcherList
     {
         /* General / Full Game Addresses */
-
-        public MemoryWatcher<int> LoadCounter { get; }
+        public MemoryWatcher<int> IsLoading { get; }
         public MemoryWatcher<int> IsSaving { get; }
         public MemoryWatcher<int> IsLoadingDeath { get; }
         public MemoryWatcher<int> IsPauseMenu { get; }
@@ -49,7 +50,8 @@ namespace LiveSplit.MirrorsEdgeLRT
             if (version == GameVersion.Steam)
             {
                 /* Full Game/General Pointers */
-                this.LoadCounter = new MemoryWatcher<int>(new DeepPointer("binkw32.dll", 0x233B8));
+
+                this.IsLoading = new MemoryWatcher<int>(new DeepPointer(0x01B6443C));
                 this.IsSaving = new MemoryWatcher<int>(new DeepPointer(0x01C55EA8, 0xCC));
                 this.IsLoadingDeath = new MemoryWatcher<int>(new DeepPointer(0x1BFA630));
                 this.IsPauseMenu = new MemoryWatcher<int>(new DeepPointer(0x01B985AC, 0x0, 0x188));
@@ -86,8 +88,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             }
             else if (version == GameVersion.Reloaded)
             {
-                this.LoadCounter = new MemoryWatcher<int>(new DeepPointer("binkw32.dll", 0x233B8));
-
+                this.IsLoading = new MemoryWatcher<int>(new DeepPointer(0x01B685BC));
                 this.IsSaving = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0xCC));
                 this.IsLoadingDeath = new MemoryWatcher<int>(new DeepPointer(0x1C136E4));
                 this.IsPauseMenu = new MemoryWatcher<int>(new DeepPointer(0x01BB166C, 0x0, 0x188));
@@ -123,8 +124,6 @@ namespace LiveSplit.MirrorsEdgeLRT
             }
             else if (version == GameVersion.Origin)
             {
-                this.LoadCounter = new MemoryWatcher<int>(new DeepPointer("binkw32.dll", 0x233B8));
-
                 this.IsSaving = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0xCC));
                 this.IsLoadingDeath = new MemoryWatcher<int>(new DeepPointer(0x01C136F0));
                 this.IsPauseMenu = new MemoryWatcher<int>(new DeepPointer(0x01C11BE0, 0x32C));
@@ -185,8 +184,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             Steam2 = 32976896,
             Reloaded1 = 60298504,
             Reloaded2 = 42876928,
-            Origin = 42889216,
-            binkw32 = 229376
+            Origin = 42889216
         }
 
         private readonly Dictionary<string, int> levels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
@@ -233,15 +231,15 @@ namespace LiveSplit.MirrorsEdgeLRT
 
         private Vector3f SDEntryBtn = new Vector3f(1311f, -30027f, -6634f);
         private Vector3f SDExitGate = new Vector3f(1468f, -10471.75f, -7267.36f);
-        private Vector3f SDExitBtn = new Vector3f(953f, -6833f, -3132f);
 
-        private bool SDEntryBtnHit = false;
-        private bool SDExitReached = false;
+        private bool SDEntranceGateBtnHit = false;
         private bool SDExitBtnHit = false;
+        private bool SDExitHasSplit = false;
         private bool SDExitGateBtnHit = false;
+
         private bool timerStarted = false;
         private bool menuWhileStreaming = false;
-
+        
         private GameVersion version;
 
         private Process game;
@@ -249,6 +247,16 @@ namespace LiveSplit.MirrorsEdgeLRT
         private MirrorsEdgeLRTSettings UserSettings;
 
         private TimerModel timer;
+
+        private IntPtr SDEntryGateBtnPtr = IntPtr.Zero;
+        private IntPtr SDExitGateBtnPtr = IntPtr.Zero;
+        private IntPtr SDExitBtnPtr = IntPtr.Zero;
+
+        private MemoryWatcher<int> EntryGateBtnCount;
+        private MemoryWatcher<int> ExitGateBtnCount;
+        private MemoryWatcher<int> ExitBtnCount;
+
+        private bool isRunning = false;
 
         public GameMemory(MirrorsEdgeLRTSettings Settings, TimerModel _timer)
         {
@@ -269,8 +277,6 @@ namespace LiveSplit.MirrorsEdgeLRT
             TimedTraceListener.Instance.UpdateCount++;
 
             _data.UpdateAll(_process);
-
-            bool isLoadingStatic = _data.LoadCounter.Current > _data.LoadCounter.Old;
             
             bool bIgnoreMoveInput = (_data.IgnoreMoveInput.Current & 1) != 0;
             bool bIgnoreButtonInput = (_data.IgnoreButtonInput.Current & 1) != 0;
@@ -331,42 +337,23 @@ namespace LiveSplit.MirrorsEdgeLRT
                 {
                     Vector3f PlayerPos = new Vector3f(_data.PlayerPosX.Current, _data.PlayerPosY.Current, _data.PlayerPosZ.Current);
 
-                    if (levels[_data.PersistentLevel.Current] == 2 && !SDExitReached)
-                    {
-                        if (PlayerPos.Distance(SDExitBtn) < 100f)
-                        {
-                            SDExitReached = true;
-                            SDExitBtnHit = true;
-                        }
-                    }
-                    else if (levels[_data.PersistentLevel.Current] != 2)
-                    {
-                        SDExitBtnHit = false;
-                        SDExitReached = false;
-                        SDExitGateBtnHit = false;
-                    }
-
                     if (_data.RespawnCP.Current == "Gate1")
                     {
                         if (PlayerPos.Distance(SDEntryBtn) < 130f)
                         {
-                            SDEntryBtnHit = true;
+                            SDEntranceGateBtnHit = true;
                         }
                     }
-                    else
+                    else if (_data.RespawnCP.Current == "Waterfall")
                     {
-                        SDEntryBtnHit = false;
-                    }
-
-                    if (_data.RespawnCP.Current == "Waterfall")
-                    {
-                        if (PlayerPos.Distance(SDExitGate) < 130f && _data.PlayerPosY.Current < -10370f)
+                        if (PlayerPos.Distance(SDExitGate) < 130f && _data.PlayerPosY.Current < -10350f)
                         {
                             SDExitGateBtnHit = true;
                         }
                     }
                     else
                     {
+                        SDEntranceGateBtnHit = false;
                         SDExitGateBtnHit = false;
                     }
                 }
@@ -380,16 +367,23 @@ namespace LiveSplit.MirrorsEdgeLRT
                         this.OnSplit?.Invoke(this, EventArgs.Empty);
                         Debug.WriteLine("chapter split");
                     }
-                    else if (SDExitBtnHit && UserSettings.SDSplit)
+                    else if (SDExitBtnHit && UserSettings.SDSplit && !SDExitHasSplit)
                     {
-                        SDExitBtnHit = false;
                         this.OnSplit?.Invoke(this, EventArgs.Empty);
+                        SDExitHasSplit = true;
                         Debug.WriteLine("sd exit split");
                     }
                     else if (_data.RespawnCP.Current == "End_game" && _data.ObjectPosZ.Current == 75102 && _data.ObjectPosZ.Old != 75102)
                     {
                         this.OnSplit?.Invoke(this, EventArgs.Empty);
                         Debug.WriteLine("ending split");
+                    } 
+                    else if (levels[_data.PersistentLevel.Current] != 2)
+                    {
+                        SDExitGateBtnHit = false;
+                        SDEntranceGateBtnHit = false;
+                        SDExitBtnHit = false;
+                        SDExitHasSplit = false;
                     }
                 }
                 else
@@ -479,22 +473,81 @@ namespace LiveSplit.MirrorsEdgeLRT
                     }
                 }
 
+                /* Button Scanning */
+                if (UserSettings.Category != 4)
+                {
+                    /*if (_data.RespawnCP.Current == "Waterfall" && SDExitGateBtnPtr == IntPtr.Zero && levels[_data.PersistentLevel.Current] == 2)
+                    {
+                        StartBGTask(2);
+                    }
+                    else if (_data.RespawnCP.Current == "Gate1" && SDEntryGateBtnPtr == IntPtr.Zero && levels[_data.PersistentLevel.Current] == 2)
+                    {
+                        StartBGTask(1);
+                    }
+                    else*/ 
+                    if (_data.RespawnCP.Current == "Chute2" && SDExitBtnPtr == IntPtr.Zero && levels[_data.PersistentLevel.Current] == 2)
+                    {
+                        StartBGTask(3);
+                    } 
+                    else if (levels[_data.PersistentLevel.Current] == 2)
+                    {
+                        /*if (_data.RespawnCP.Current == "Waterfall")
+                        {
+                            ExitGateBtnCount.Update(game);
+
+                            if (ExitGateBtnCount.Current > 4)
+                            {
+                                Debug.WriteLine("Player used exit gate button");
+                                SDExitGateBtnHit = true;
+                            }
+                        }
+                        else if (_data.RespawnCP.Current == "Gate1")
+                        {
+                            EntryGateBtnCount.Update(game);
+
+                            if (EntryGateBtnCount.Current > 4)
+                            {
+                                Debug.WriteLine("Player used entrance gate button");
+                                SDEntranceGateBtnHit = true;
+                            }
+                        }
+                        else*/ 
+                        if (SDExitBtnPtr != IntPtr.Zero)
+                        {
+                            ExitBtnCount.Update(game);
+
+                            if (ExitBtnCount.Current > 4)
+                            {
+                                Debug.WriteLine("Player used exit button");
+                                SDExitBtnHit = true;
+                            }
+                        }
+                    } 
+                    else
+                    {
+                        SDEntryGateBtnPtr = IntPtr.Zero;
+                        SDExitGateBtnPtr = IntPtr.Zero;
+                        SDExitBtnPtr = IntPtr.Zero;
+                    } 
+                }
+
                 /* -- Removing Loads -- */
-                if (isLoadingStatic || _data.IsWhiteScreen.Current > 1)
+                if (_data.IsLoading.Current == 0)
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
-                    Debug.WriteLine("static loading screen");
+                    Debug.WriteLine("static loading screen or 2D cutscene");
                 }
-                //else if (_data.IsWhiteScreen.Current == 1 && !(levels[_data.PersistentLevel.Current] == -1 && bIgnoreButtonInput))
+                else if (_data.IsWhiteScreen.Current == 1 && !(levels[_data.PersistentLevel.Current] == -1 && bIgnoreButtonInput))
+                {
+                    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
+                    Debug.WriteLine("white screen or static loading screen or cutscene");
+                }
+                /* this is probably not needed with the new loading address */
+                //else if (_data.IsWhiteScreen.Current > 1 && _data.IsSaving.Old == 1)
                 //{
                 //    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
-                //    Debug.WriteLine("white screen or static loading screen or cutscene");
+                //    Debug.WriteLine("load between save icon and static loading screen/cutscene");
                 //}
-                else if (_data.IsWhiteScreen.Current > 1 && _data.IsSaving.Old == 1)
-                {
-                    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
-                    Debug.WriteLine("load between save icon and static loading screen/cutscene");
-                }
                 else if (_data.IsLoadingDeath.Current == 1)
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
@@ -544,7 +597,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                     (_data.RespawnCP.Current == "combat_3" && SubLevelStates.Contains(true) && !bAllowMoveChange) || // 8B
                     (_data.RespawnCP.Current == "scraper_before_lobby" && SubLevelStates.Contains(true) && _data.ObjectPosZ.Current > 32 && !bAllowMoveChange) || // 9B
                     ((_data.RespawnCP.Current == "Scraper_Inside_elevator_lobby" || _data.RespawnCP.Current == "Elevator_shaft") && SubLevelStates.Contains(true) && _data.IsPauseMenu.Current == 1) || // 9C
-                    (_data.RespawnCP.Current == "Gate1" && SubLevelStates.Contains(true) && _data.MoveState.Current != 72 && SDEntryBtnHit) || // Stormdrains Entrance Load
+                    (_data.RespawnCP.Current == "Gate1" && SubLevelStates.Contains(true) && _data.MoveState.Current != 72 && SDEntranceGateBtnHit) || // Stormdrains Entrance Load
                     (_data.RespawnCP.Current == "Waterfall" && SubLevelStates.Contains(true) && SDExitGateBtnHit) || // Stormdrains Exit Load
                     (_data.RespawnCP.Current == "Platform_fight" && SubLevelStates.Contains(true) && _data.IsPauseMenu.Current == 1) || // Chapter 4 Skip Load
                     (_data.RespawnCP.Current == "steamroom_puzzle" && SubLevelStates.Contains(true) && _data.IsPauseMenu.Current == 1) // Factory Skip Load
@@ -567,6 +620,7 @@ namespace LiveSplit.MirrorsEdgeLRT
 
         bool TryGetGameProcess()
         {
+            /* this function hooks the game process and checks which version is running */
             game = Process.GetProcesses().FirstOrDefault(p => p.ProcessName.ToLower() == "mirrorsedge"
                 && !p.HasExited && !_ignorePIDs.Contains(p.Id));
             if (game == null)
@@ -592,19 +646,143 @@ namespace LiveSplit.MirrorsEdgeLRT
                 return false;
             }
 
-            ProcessModuleWow64Safe binkw = game.ModulesWow64Safe().FirstOrDefault(p => p.ModuleName.ToLower() == "binkw32.dll");
-            if (binkw == null)
-                return false;
-
-            if (binkw.ModuleMemorySize != (int)ExpectedDllSizes.binkw32)
-                return false;
-
             Debug.WriteLine("game version " + version);
-            Debug.WriteLine("binkw32 size: " + binkw.ModuleMemorySize);
             _data = new GameData(version);
             _process = game;
 
             return true;
+        }
+
+        /* these functions perform signature scans for the buttons in stormdrains (entrance, exit, top of exit) */
+        IntPtr ExitGateScan()
+        {
+            IntPtr exitGateBtn = IntPtr.Zero;
+
+            SigScanTarget target = new SigScanTarget("00 80 BA 44 00 20 23 C6 00 00 E2 C5 00 00 00 00 51 7C 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 3E 00 00 80 3F 00 00 80 3F 00 00 80 3F");
+
+            TimeStamp StartTime = TimeStamp.Now;
+
+            foreach (var page in game.MemoryPages(true))
+            {
+                SignatureScanner scanner = new SignatureScanner(game, page.BaseAddress, (int)page.RegionSize);
+                exitGateBtn = scanner.Scan(target);
+                if (exitGateBtn != IntPtr.Zero)
+                    break;
+            }
+
+            if (exitGateBtn == IntPtr.Zero)
+            {
+                Debug.WriteLine("Could not find SD Exit Gate Button Pointer");
+                Debug.WriteLine("Time taken: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            } 
+            else
+            {
+                exitGateBtn -= 156;
+                Debug.WriteLine("Found sd exit gate btn ptr: " + exitGateBtn.ToString("X"));
+                Debug.WriteLine("Time taken: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            }
+
+            return exitGateBtn;
+        }
+
+        IntPtr EntryGateScan()
+        {
+            IntPtr entryGateBtn = IntPtr.Zero;
+
+            SigScanTarget target = new SigScanTarget("45 6B A5 44 82 4D EA C6 00 40 CE C5 00 00 00 00 ED 7D 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 3E 00 00 80 3F 00 00 80 3F 00 00 80 3F");
+
+            TimeStamp StartTime = TimeStamp.Now;
+
+            foreach (var page in game.MemoryPages(true))
+            {
+                SignatureScanner scanner = new SignatureScanner(game, page.BaseAddress, (int)page.RegionSize);
+                entryGateBtn = scanner.Scan(target);
+                if (entryGateBtn != IntPtr.Zero)
+                    break;
+            }
+
+            if (entryGateBtn == IntPtr.Zero)
+            {
+                Debug.WriteLine("Could not find SD Entrance Gate Button Pointer");
+                Debug.WriteLine("Time taken: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            }
+            else
+            {
+                entryGateBtn -= 156;
+                Debug.WriteLine("Found SD Entrance Gate Button Pointer: " + entryGateBtn.ToString("X"));
+                Debug.WriteLine("Time taken: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            }
+
+            return entryGateBtn;
+        }
+
+        IntPtr ExitBtnScan()
+        {
+            IntPtr exitBtn = IntPtr.Zero;
+
+            SigScanTarget target = new SigScanTarget("FC 01 70 44 22 A6 D6 C5 00 80 41 C5 00 00 00 00 10 21 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 3F 00 00 80 3F 00 00 80 3F 00 00 80 3F");
+
+            TimeStamp StartTime = TimeStamp.Now;
+
+            foreach (var page in game.MemoryPages(true))
+            {
+                SignatureScanner scanner = new SignatureScanner(game, page.BaseAddress, (int)page.RegionSize);
+                exitBtn = scanner.Scan(target);
+                if (exitBtn != IntPtr.Zero)
+                    break;
+            }
+
+            if (exitBtn == IntPtr.Zero)
+            {
+                Debug.WriteLine("Could not find SD Exit Button Pointer");
+                Debug.WriteLine("Time taken: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            }
+            else
+            {
+                exitBtn -= 156;
+                Debug.WriteLine("Found SD Exit Button Pointer: " + exitBtn.ToString("X"));
+                Debug.WriteLine("Time taken: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            }
+
+            return exitBtn;
+        }
+
+        /* this functions starts the above 3 as a background task when needed so they don't make the timer freeze while scanning */
+        private async void StartBGTask(int btnSelect)
+        {
+            if (btnSelect == 3 && SDExitBtnPtr == IntPtr.Zero && !isRunning)
+            {
+                isRunning = true;
+                SDExitBtnPtr = await Task.Run(() => ExitBtnScan());
+                isRunning = false;
+
+                Debug.WriteLine("Exit Button PTR: " + SDExitBtnPtr.ToString("X"));
+                ExitBtnCount = new MemoryWatcher<int>(new DeepPointer(SDExitBtnPtr));
+                ExitBtnCount.Update(game);
+                Debug.WriteLine("Exit Button Use Count: " + ExitBtnCount.Current);
+            } 
+            else if (btnSelect == 2 && SDExitGateBtnPtr == IntPtr.Zero && !isRunning)
+            {
+                isRunning = true;
+                SDExitGateBtnPtr = await Task.Run(() => ExitGateScan());
+                isRunning = false;
+
+                Debug.WriteLine("Exit Gate PTR: " + SDExitGateBtnPtr.ToString("X"));
+                ExitGateBtnCount = new MemoryWatcher<int>(new DeepPointer(SDExitGateBtnPtr));
+                ExitGateBtnCount.Update(game);
+                Debug.WriteLine("Exit Gate Button Use Count: " + ExitGateBtnCount.Current);
+            }
+            else if (btnSelect == 1 && SDEntryGateBtnPtr == IntPtr.Zero && !isRunning)
+            {
+                isRunning = true;
+                SDEntryGateBtnPtr = await Task.Run(() => EntryGateScan());
+                isRunning = false;
+
+                Debug.WriteLine("Entry Gate PTR: " + SDEntryGateBtnPtr.ToString("X"));
+                EntryGateBtnCount = new MemoryWatcher<int>(new DeepPointer(SDEntryGateBtnPtr));
+                EntryGateBtnCount.Update(game);
+                Debug.WriteLine("Entry Gate Button Use Count: " + EntryGateBtnCount.Current);
+            }
         }
     }
 
