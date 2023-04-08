@@ -485,11 +485,19 @@ namespace LiveSplit.MirrorsEdgeLRT
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("static loading screen");
                 }
+<<<<<<< HEAD
                 //else if (_data.IsWhiteScreen.Current == 1 && !(levels[_data.PersistentLevel.Current] == -1 && bIgnoreButtonInput))
                 //{
                 //    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                 //    Debug.WriteLine("white screen or static loading screen or cutscene");
                 //}
+=======
+                else if (_data.IsWhiteScreen.Current == 1 && !(levels[_data.PersistentLevel.Current] == -1 && bIgnoreButtonInput))
+                {
+                    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
+                    Debug.WriteLine("white screen or static loading screen or cutscene");
+                }
+>>>>>>> 011fa7f (initial commit)
                 else if (_data.IsWhiteScreen.Current > 1 && _data.IsSaving.Old == 1)
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
