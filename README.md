@@ -21,9 +21,9 @@
     - Save Icons (see known issues)
     - White Screens
     - 5B infinite timer pause is fixed
-    - more accurately times elevators (pauses only when streaming blocks an elevator from moving/does not pause for the fixed delays between loading & unloading in some elevators)
-    - the timer will pause if the player tabs/opens the escape menu during level streaming and it will stay paused until the player exits the menu
-    - support for splitting in 69 Stars
+    - More accurately times elevators (pauses only when streaming blocks an elevator from moving/does not pause for the fixed delays between loading & unloading in some elevators)
+    - The timer will pause if the player tabs/opens the escape menu during level streaming and it will stay paused until the player exits the menu
+    - Support for splitting in 69 Stars
     - Custom starting time trial for 69 Stars
     
 ### Features to be added:
