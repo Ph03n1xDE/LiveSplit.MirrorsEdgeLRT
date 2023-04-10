@@ -1,6 +1,6 @@
 Features:
 
-- Covers (at least we hope/have seen in testing):
+- Covers:
 
   - Things Fatalis' timer did:
 
@@ -24,10 +24,12 @@ Features:
     - more accurately times elevators (pauses only when streaming blocks an elevator from moving/does not pause for the fixed delays between loading & unloading in some elevators)
     - the timer will pause if the player tabs/opens the escape menu during level streaming and it will stay paused until the player exits the menu
 
+    - Custom starting time trial for 69 Stars
+    
 Features to be added:
 
 - Splitting on bag collection in 100%/disabling chapter splits in 100%
-- Custom starting time trial for 69 Stars
+
 
 Known Issues:
 
