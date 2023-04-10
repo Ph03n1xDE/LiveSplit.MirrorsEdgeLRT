@@ -23,7 +23,7 @@
     - 5B infinite timer pause is fixed
     - more accurately times elevators (pauses only when streaming blocks an elevator from moving/does not pause for the fixed delays between loading & unloading in some elevators)
     - the timer will pause if the player tabs/opens the escape menu during level streaming and it will stay paused until the player exits the menu
-    - support for 69 Stars
+    - support for splitting in 69 Stars
     - Custom starting time trial for 69 Stars
     
 ### Features to be added:
