@@ -7,6 +7,7 @@ using LiveSplit.ComponentUtil;
 using LiveSplit.Model;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace LiveSplit.MirrorsEdgeLRT
 {
@@ -200,30 +201,61 @@ namespace LiveSplit.MirrorsEdgeLRT
             {"factory_p", 6},
             {"boat_p", 7},
             {"convoy_p", 8},
-            {"scraper_p", 9},
-            {"tt_TutorialA01_p", 10},
-            {"tt_TutorialA02_p", 11},
-            {"tt_TutorialA03_p", 12},
-            {"tt_EdgeA01_p", 13},
-            {"tt_EscapeB01_p", 14},
-            {"tt_EscapeA01_p", 15},
-            {"tt_StormdrainA02_p", 16},
-            {"tt_StormdrainB01_p", 17},
-            {"tt_StormdrainB02_p", 18},
-            {"tt_StormdrainB03_p", 19},
-            {"tt_CranesA01_p", 20},
-            {"tt_CranesC01_p", 21},
-            {"tt_CranesB02_p", 22},
-            {"tt_CranesB01_p", 23},
-            {"tt_MallA01_p", 24},
-            {"tt_FactoryA01_p", 25},
-            {"tt_CranesD01_p", 26},
-            {"tt_ConvoyB01_p", 27},
-            {"tt_ConvoyB02_p", 28},
-            {"tt_ConvoyA01_p", 29},
-            {"tt_ConvoyA02_p", 30},
-            {"tt_ScraperA01_p", 31},
-            {"tt_ScraperB01_p", 32},
+            {"scraper_p", 9}
+        };
+
+        private Dictionary<int, float> TTCoords = new Dictionary<int, float>()
+        {
+            {15, 2224},
+            {16, 2224},
+            {21, 1424},
+            {4, -7594.46f},
+            {23, 18149},
+            {22, 5867.30f},
+            {6, 532},
+            {7, 1082},
+            {8, 5721},
+            {9, -1235.96f},
+            {1, 2096},
+            {20, -7312.65f},
+            {3, 34247},
+            {2, 37792},
+            {14, -7158},
+            {17, 2970},
+            {24, -2304},
+            {12, -32203.00f},
+            {13, -19229.02f},
+            {10, 144},
+            {11, 2542.04f},
+            {18, -830.43f},
+            {19, -469}
+        };
+
+        private Dictionary<int, string> TTNames = new Dictionary<int, string>()
+        {
+            {15, "tt_TutorialA01_p"},
+            {16, "tt_TutorialA02_p"},
+            {21, "tt_TutorialA03_p"},
+            {4, "tt_EdgeA01_p"},
+            {23, "tt_EscapeB01_p"},
+            {22, "tt_EscapeA01_p"},
+            {6, "tt_StormdrainA02_p"},
+            {7, "tt_StormdrainB01_p"},
+            {8, "tt_StormdrainB02_p"},
+            {9, "tt_StormdrainB03_p"},
+            {1, "tt_CranesA01_p"},
+            {20, "tt_CranesC01_p"},
+            {3, "tt_CranesB02_p"},
+            {2, "tt_CranesB01_p"},
+            {14, "tt_MallA01_p"},
+            {17, "tt_FactoryA01_p"},
+            {24, "tt_CranesD01_p"},
+            {12, "tt_ConvoyB01_p"},
+            {13, "tt_ConvoyB02_p"},
+            {10, "tt_ConvoyA01_p"},
+            {11, "tt_ConvoyA02_p"},
+            {18, "tt_ScraperA01_p"},
+            {19, "tt_ScraperB01_p"}
         };
 
         private List<bool> SubLevelStates = new List<bool>();
@@ -236,6 +268,7 @@ namespace LiveSplit.MirrorsEdgeLRT
         private bool SDExitBtnHit = false;
         private bool SDExitHasSplit = false;
         private bool SDExitGateBtnHit = false;
+        private bool Truck50Elapsed = false;
 
         private bool timerStarted = false;
         private bool menuWhileStreaming = false;
@@ -277,7 +310,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             TimedTraceListener.Instance.UpdateCount++;
 
             _data.UpdateAll(_process);
-            
+
             bool bIgnoreMoveInput = (_data.IgnoreMoveInput.Current & 1) != 0;
             bool bIgnoreButtonInput = (_data.IgnoreButtonInput.Current & 1) != 0;
             bool bIgnoreLookInput = (_data.IgnoreLookInput.Current & 1) != 0;
@@ -303,7 +336,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             } 
             else
             {
-                if (_data.ActiveTTStretch.Current == 15 && bIgnoreMoveInput && bIgnoreLookInput && _data.PlayerPosX.Current == 2224 && !timerStarted)
+                if (_data.ActiveTTStretch.Current == UserSettings.StartTT && bIgnoreMoveInput && bIgnoreLookInput && (int)_data.PlayerPosX.Current == (int)TTCoords[UserSettings.StartTT] && !timerStarted)
                 {
                     this.OnStart?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("starting timer");
@@ -322,7 +355,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             } 
             else
             {
-                if (_data.PersistentLevel.Old == "TdMainMenu" && _data.PersistentLevel.Current == "tt_TutorialA01_p")
+                if (_data.PersistentLevel.Old == "TdMainMenu" && _data.PersistentLevel.Current == TTNames[UserSettings.StartTT])
                 {
                     timerStarted = false;
                     this.OnReset?.Invoke(this, EventArgs.Empty);
@@ -531,23 +564,30 @@ namespace LiveSplit.MirrorsEdgeLRT
                     } 
                 }
 
+                if (_data.RespawnCP.Current == "Boat_Truckride" && _data.ObjectPosZ.Current == 64 && !isRunning)
+                {
+                    isRunning = true;
+                    System.Timers.Timer truckTimer = new System.Timers.Timer(50000);
+                    truckTimer.Elapsed += TruckTimer_Elapsed;
+                    truckTimer.Enabled = true;
+                }
+
                 /* -- Removing Loads -- */
                 if (_data.IsLoading.Current == 0)
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("static loading screen or 2D cutscene");
                 }
-                else if (_data.IsWhiteScreen.Current == 1 && !(levels[_data.PersistentLevel.Current] == -1 && bIgnoreButtonInput))
+                else if (_data.IsWhiteScreen.Current == 1 && _data.IsLoading.Old == 1 && _data.IsPauseMenu.Current == 0)
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("white screen or static loading screen or cutscene");
                 }
-                /* this is probably not needed with the new loading address */
-                //else if (_data.IsWhiteScreen.Current > 1 && _data.IsSaving.Old == 1)
-                //{
-                //    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
-                //    Debug.WriteLine("load between save icon and static loading screen/cutscene");
-                //}
+                else if (_data.IsWhiteScreen.Current > 1 && _data.RespawnCP.Current != "Boat_Truckride")
+                {
+                    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
+                    Debug.WriteLine("white screen");
+                }
                 else if (_data.IsLoadingDeath.Current == 1)
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
@@ -558,7 +598,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("menu blocked by save icon");
                 }
-                else if (UserSettings.Category != 4 && bIgnoreMoveInput && bIgnoreLookInput && bIgnoreButtonInput && _data.MoveState.Current != 38 && _data.RespawnCP.Current != "Training_area_after_cs")
+                else if (UserSettings.Category != 4 && bIgnoreMoveInput && bIgnoreLookInput && bIgnoreButtonInput && _data.MoveState.Current != 38 && _data.RespawnCP.Current != "Training_area_after_cs" && _data.RespawnCP.Current != "Office")
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("block while loading");
@@ -597,6 +637,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                     (_data.RespawnCP.Current == "combat_3" && SubLevelStates.Contains(true) && !bAllowMoveChange) || // 8B
                     (_data.RespawnCP.Current == "scraper_before_lobby" && SubLevelStates.Contains(true) && _data.ObjectPosZ.Current > 32 && !bAllowMoveChange) || // 9B
                     ((_data.RespawnCP.Current == "Scraper_Inside_elevator_lobby" || _data.RespawnCP.Current == "Elevator_shaft") && SubLevelStates.Contains(true) && _data.IsPauseMenu.Current == 1) || // 9C
+                    (_data.RespawnCP.Current == "Scraper_Inside_elevator_lobby" && _data.ObjectPosZ.Current > 13167.99f && SubLevelStates.Contains(true)) ||
                     (_data.RespawnCP.Current == "Gate1" && SubLevelStates.Contains(true) && _data.MoveState.Current != 72 && SDEntranceGateBtnHit) || // Stormdrains Entrance Load
                     (_data.RespawnCP.Current == "Waterfall" && SubLevelStates.Contains(true) && SDExitGateBtnHit) || // Stormdrains Exit Load
                     (_data.RespawnCP.Current == "Platform_fight" && SubLevelStates.Contains(true) && _data.IsPauseMenu.Current == 1) || // Chapter 4 Skip Load
@@ -611,11 +652,26 @@ namespace LiveSplit.MirrorsEdgeLRT
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("9E hallway load");
                 }
+                else if (_data.RespawnCP.Current == "Boat_Truckride" && _data.ObjectPosZ.Current == 64 && Truck50Elapsed && SubLevelStates.Contains(true))
+                {
+                    this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
+                    Debug.WriteLine("still level streaming after 50s in truck");
+                }
                 else
                 {
                     this.OnLoadFalse?.Invoke(this, EventArgs.Empty);
                 }
             }
+            else
+            {
+                isRunning = false;
+            }
+        }
+
+        private void TruckTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            isRunning = false;
+            Truck50Elapsed = true;
         }
 
         bool TryGetGameProcess()

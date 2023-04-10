@@ -41,6 +41,8 @@
             this.starSelect = new System.Windows.Forms.ComboBox();
             this.chkChapterSplit100 = new System.Windows.Forms.CheckBox();
             this.chkBagSplit = new System.Windows.Forms.CheckBox();
+            this.startTTSelect = new System.Windows.Forms.ComboBox();
+            this.startTTLbl = new System.Windows.Forms.Label();
             this.tlpMain.SuspendLayout();
             this.gbAutoSplit.SuspendLayout();
             this.tlpAutoSplit.SuspendLayout();
@@ -88,6 +90,8 @@
             this.tlpAutoSplit.Controls.Add(this.starSelect, 0, 7);
             this.tlpAutoSplit.Controls.Add(this.chkChapterSplit100, 2, 5);
             this.tlpAutoSplit.Controls.Add(this.chkBagSplit, 1, 5);
+            this.tlpAutoSplit.Controls.Add(this.startTTSelect, 1, 7);
+            this.tlpAutoSplit.Controls.Add(this.startTTLbl, 1, 6);
             this.tlpAutoSplit.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpAutoSplit.Location = new System.Drawing.Point(3, 16);
             this.tlpAutoSplit.Name = "tlpAutoSplit";
@@ -220,6 +224,27 @@
             this.chkBagSplit.Visible = false;
             this.chkBagSplit.CheckedChanged += new System.EventHandler(this.chkBagSplit_CheckedChanged);
             // 
+            // startTTSelect
+            // 
+            this.startTTSelect.FormattingEnabled = true;
+            this.startTTSelect.Location = new System.Drawing.Point(157, 151);
+            this.startTTSelect.MaxDropDownItems = 5;
+            this.startTTSelect.Name = "startTTSelect";
+            this.startTTSelect.Size = new System.Drawing.Size(121, 21);
+            this.startTTSelect.TabIndex = 13;
+            this.startTTSelect.Visible = false;
+            this.startTTSelect.SelectedIndexChanged += new System.EventHandler(this.startTTSelect_SelectedIndexChanged);
+            // 
+            // startTTLbl
+            // 
+            this.startTTLbl.AutoSize = true;
+            this.startTTLbl.Location = new System.Drawing.Point(157, 132);
+            this.startTTLbl.Name = "startTTLbl";
+            this.startTTLbl.Size = new System.Drawing.Size(92, 13);
+            this.startTTLbl.TabIndex = 14;
+            this.startTTLbl.Text = "Starting Time Trial";
+            this.startTTLbl.Visible = false;
+            // 
             // MirrorsEdgeLRTSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -251,5 +276,7 @@
         private System.Windows.Forms.Label labelStars;
         private System.Windows.Forms.CheckBox chkBagSplit;
         private System.Windows.Forms.CheckBox chkChapterSplit100;
+        private System.Windows.Forms.ComboBox startTTSelect;
+        private System.Windows.Forms.Label startTTLbl;
     }
 }
