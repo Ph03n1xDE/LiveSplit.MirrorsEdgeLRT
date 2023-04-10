@@ -1,6 +1,6 @@
-Features:
+# Mirror's Edge LRT - Load Remover and Auto Splitter
 
-- Covers:
+### Features:
 
   - Things Fatalis' timer did:
 
@@ -26,15 +26,15 @@ Features:
 
     - Custom starting time trial for 69 Stars
     
-Features to be added:
+### Features to be added:
 
 - Splitting on bag collection in 100%/disabling chapter splits in 100%
 
 
-Known Issues:
+### Known Issues:
 
 - Timer can appear laggy at times, which seems to be a LiveSplit+Medge issue and not directly related to our component (this seems like it can be temporarily fixed by restarting the game)
 
-Installation:
+### Installation:
 
 Put the LiveSplit.MirrorsEdgeLRT.dll in your LiveSplit/Components folder. Then edit your layout and add the component from the control section.
