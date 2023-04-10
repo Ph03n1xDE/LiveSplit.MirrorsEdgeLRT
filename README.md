@@ -33,7 +33,7 @@
 
 ### Known Issues:
 
-- Timer can appear laggy at times, which seems to be a LiveSplit+Medge issue and not directly related to our component (this seems like it can be temporarily fixed by restarting the game)
+- Timer can appear laggy at times, which seems to be a LiveSplit+Medge issue and not directly related to this component (can usually be temporarily fixed by restarting the game)
 
 ### Installation:
 
