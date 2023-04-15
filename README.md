@@ -25,10 +25,11 @@
     - The timer will pause if the player tabs/opens the escape menu during level streaming and it will stay paused until the player exits the menu
     - Support for splitting in 69 Stars
     - Custom starting time trial for 69 Stars
+    - Splitting on bag collection in 100%/disabling chapter splits in 100%
     
 ### Features to be added:
 
-- Splitting on bag collection in 100%/disabling chapter splits in 100%
+- Splitting on checkpoints (unlikely for now)
 
 
 ### Known Issues:
