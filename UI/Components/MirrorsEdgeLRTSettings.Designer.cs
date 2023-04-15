@@ -40,7 +40,6 @@
             this.labelStars = new System.Windows.Forms.Label();
             this.starSelect = new System.Windows.Forms.ComboBox();
             this.chkChapterSplit100 = new System.Windows.Forms.CheckBox();
-            this.chkBagSplit = new System.Windows.Forms.CheckBox();
             this.startTTSelect = new System.Windows.Forms.ComboBox();
             this.startTTLbl = new System.Windows.Forms.Label();
             this.tlpMain.SuspendLayout();
@@ -88,10 +87,9 @@
             this.tlpAutoSplit.Controls.Add(this.catSelect, 0, 5);
             this.tlpAutoSplit.Controls.Add(this.labelStars, 0, 6);
             this.tlpAutoSplit.Controls.Add(this.starSelect, 0, 7);
-            this.tlpAutoSplit.Controls.Add(this.chkChapterSplit100, 2, 5);
-            this.tlpAutoSplit.Controls.Add(this.chkBagSplit, 1, 5);
             this.tlpAutoSplit.Controls.Add(this.startTTSelect, 1, 7);
             this.tlpAutoSplit.Controls.Add(this.startTTLbl, 1, 6);
+            this.tlpAutoSplit.Controls.Add(this.chkChapterSplit100, 1, 5);
             this.tlpAutoSplit.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpAutoSplit.Location = new System.Drawing.Point(3, 16);
             this.tlpAutoSplit.Name = "tlpAutoSplit";
@@ -203,7 +201,7 @@
             // chkChapterSplit100
             // 
             this.chkChapterSplit100.AutoSize = true;
-            this.chkChapterSplit100.Location = new System.Drawing.Point(307, 108);
+            this.chkChapterSplit100.Location = new System.Drawing.Point(157, 108);
             this.chkChapterSplit100.Name = "chkChapterSplit100";
             this.chkChapterSplit100.Size = new System.Drawing.Size(124, 17);
             this.chkChapterSplit100.TabIndex = 12;
@@ -211,18 +209,6 @@
             this.chkChapterSplit100.UseVisualStyleBackColor = true;
             this.chkChapterSplit100.Visible = false;
             this.chkChapterSplit100.CheckedChanged += new System.EventHandler(this.chkChapterSplit100_CheckedChanged);
-            // 
-            // chkBagSplit
-            // 
-            this.chkBagSplit.AutoSize = true;
-            this.chkBagSplit.Location = new System.Drawing.Point(157, 108);
-            this.chkBagSplit.Name = "chkBagSplit";
-            this.chkBagSplit.Size = new System.Drawing.Size(88, 17);
-            this.chkBagSplit.TabIndex = 11;
-            this.chkBagSplit.Text = "Split on Bags";
-            this.chkBagSplit.UseVisualStyleBackColor = true;
-            this.chkBagSplit.Visible = false;
-            this.chkBagSplit.CheckedChanged += new System.EventHandler(this.chkBagSplit_CheckedChanged);
             // 
             // startTTSelect
             // 
@@ -274,7 +260,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox catSelect;
         private System.Windows.Forms.Label labelStars;
-        private System.Windows.Forms.CheckBox chkBagSplit;
         private System.Windows.Forms.CheckBox chkChapterSplit100;
         private System.Windows.Forms.ComboBox startTTSelect;
         private System.Windows.Forms.Label startTTLbl;

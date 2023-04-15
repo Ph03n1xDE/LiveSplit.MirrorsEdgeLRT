@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Windows.Forms;
-using LiveSplit.ComponentUtil;
-using LiveSplit.Model;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+
+using LiveSplit.ComponentUtil;
+using LiveSplit.Model;
 
 namespace LiveSplit.MirrorsEdgeLRT
 {
@@ -24,9 +24,7 @@ namespace LiveSplit.MirrorsEdgeLRT
         public StringWatcher RespawnCP { get; }
         public StringWatcher PersistentLevel { get; }
 
-        public MemoryWatcher<float> PlayerPosX { get; }
-        public MemoryWatcher<float> PlayerPosY { get; }
-        public MemoryWatcher<float> PlayerPosZ { get; }
+        public MemoryWatcher<Vector3f> PlayerPos { get; }
 
         public MemoryWatcher<byte> MoveState { get; }
         public MemoryWatcher<byte> AllowMoveChange { get; }
@@ -46,12 +44,14 @@ namespace LiveSplit.MirrorsEdgeLRT
         public MemoryWatcher<float> TwoStarTime { get; }
         public MemoryWatcher<float> OneStarTime { get; }
 
+        /* Bag Counter */
+        public MemoryWatcher<int> BagCounter { get; }
+
         public GameData(GameVersion version)
         {
             if (version == GameVersion.Steam)
             {
                 /* Full Game/General Pointers */
-
                 this.IsLoading = new MemoryWatcher<int>(new DeepPointer(0x01B6443C));
                 this.IsSaving = new MemoryWatcher<int>(new DeepPointer(0x01C55EA8, 0xCC));
                 this.IsLoadingDeath = new MemoryWatcher<int>(new DeepPointer(0x1BFA630));
@@ -61,12 +61,10 @@ namespace LiveSplit.MirrorsEdgeLRT
                 this.LoadedSubLevels = new MemoryWatcher<int>(new DeepPointer(0x01BFBCA4, 0x48));
                 this.TotalSubLevels = new MemoryWatcher<int>(new DeepPointer(0x01BFBB70, 0x7C, 0x9C, 0xBF0));
 
-                this.RespawnCP = new StringWatcher(new DeepPointer(0x01C55EA8, 0x74, 0x0, 0x3C, 0x0), 128);
-                this.PersistentLevel = new StringWatcher(new DeepPointer(0x01BF8B20, 0x3CC, 0x0), 128);
+                this.RespawnCP = new StringWatcher(new DeepPointer(0x01C55EA8, 0x74, 0x0, 0x3C, 0x0), 58);
+                this.PersistentLevel = new StringWatcher(new DeepPointer(0x01BF8B20, 0x3CC, 0x0), 24);
 
-                this.PlayerPosX = new MemoryWatcher<float>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0xE8));
-                this.PlayerPosY = new MemoryWatcher<float>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0xEC));
-                this.PlayerPosZ = new MemoryWatcher<float>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0xF0));
+                this.PlayerPos = new MemoryWatcher<Vector3f>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0xE8));
 
                 this.MoveState = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0x500));
                 this.AllowMoveChange = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0x41D));
@@ -86,9 +84,12 @@ namespace LiveSplit.MirrorsEdgeLRT
                 this.TwoStarTime = new MemoryWatcher<float>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x40C));
                 this.OneStarTime = new MemoryWatcher<float>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x410));
 
+                /* Bag Counter */
+                this.BagCounter = new MemoryWatcher<int>(new DeepPointer(0x01B73F1C, 0x64, 0x4C, 0x7A4));
             }
             else if (version == GameVersion.Reloaded)
             {
+                /* Full Game/General Pointers */
                 this.IsLoading = new MemoryWatcher<int>(new DeepPointer(0x01B685BC));
                 this.IsSaving = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0xCC));
                 this.IsLoadingDeath = new MemoryWatcher<int>(new DeepPointer(0x1C136E4));
@@ -98,12 +99,10 @@ namespace LiveSplit.MirrorsEdgeLRT
                 this.LoadedSubLevels = new MemoryWatcher<int>(new DeepPointer(0x01C14D5C, 0x48));
                 this.TotalSubLevels = new MemoryWatcher<int>(new DeepPointer(0x01C14C28, 0x10, 0x9C, 0xBF0));
 
-                this.RespawnCP = new StringWatcher(new DeepPointer(0x01C6EFE0, 0x134, 0xBC, 0x0, 0x3C, 0x0), 128);
-                this.PersistentLevel = new StringWatcher(new DeepPointer(0x01C6EFE0, 0x170, 0x1DC, 0x1E8, 0x3C, 0x528, 0x3CC, 0x0), 128);
+                this.RespawnCP = new StringWatcher(new DeepPointer(0x01C6EFE0, 0x134, 0xBC, 0x0, 0x3C, 0x0), 58);
+                this.PersistentLevel = new StringWatcher(new DeepPointer(0x01C6EFE0, 0x170, 0x1DC, 0x1E8, 0x3C, 0x528, 0x3CC, 0x0), 24);
 
-                this.PlayerPosX = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xE8));
-                this.PlayerPosY = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xEC));
-                this.PlayerPosZ = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xF0));
+                this.PlayerPos = new MemoryWatcher<Vector3f>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xE8));
 
                 this.MoveState = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x500));
                 this.AllowMoveChange = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x41D));
@@ -122,9 +121,14 @@ namespace LiveSplit.MirrorsEdgeLRT
                 this.ThreeStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x408));
                 this.TwoStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x40C));
                 this.OneStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x410));
+
+                /* Bag Counter */
+                this.BagCounter = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0x194, 0x128, 0x3C, 0x11C, 0x64, 0x4C, 0x7A4));
             }
             else if (version == GameVersion.Origin)
             {
+                /* Full Game/General Pointers */
+                // TODO: isLoading
                 this.IsSaving = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0xCC));
                 this.IsLoadingDeath = new MemoryWatcher<int>(new DeepPointer(0x01C136F0));
                 this.IsPauseMenu = new MemoryWatcher<int>(new DeepPointer(0x01C11BE0, 0x32C));
@@ -133,12 +137,10 @@ namespace LiveSplit.MirrorsEdgeLRT
                 this.LoadedSubLevels = new MemoryWatcher<int>(new DeepPointer(0x01C14D64, 0x48));
                 this.TotalSubLevels = new MemoryWatcher<int>(new DeepPointer(0x01C14C30, 0xC, 0x9C, 0xBF0));
 
-                this.RespawnCP = new StringWatcher(new DeepPointer(0x01C6EFE0, 0x134, 0xBC, 0x0, 0x3C, 0x0), 128);
-                this.PersistentLevel = new StringWatcher(new DeepPointer(0x01C11BE0, 0x330, 0x0), 128);
+                this.RespawnCP = new StringWatcher(new DeepPointer(0x01C6EFE0, 0x134, 0xBC, 0x0, 0x3C, 0x0), 58);
+                this.PersistentLevel = new StringWatcher(new DeepPointer(0x01C11BE0, 0x330, 0x0), 24);
 
-                this.PlayerPosX = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xE8));
-                this.PlayerPosY = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xEC));
-                this.PlayerPosZ = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xF0));
+                this.PlayerPos = new MemoryWatcher<Vector3f>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0xE8));
 
                 this.MoveState = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x500));
                 this.AllowMoveChange = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x41D));
@@ -157,6 +159,9 @@ namespace LiveSplit.MirrorsEdgeLRT
                 this.ThreeStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x408));
                 this.TwoStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x40C));
                 this.OneStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x410));
+
+                /* Bag Counter */
+                this.BagCounter = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0x194, 0x128, 0x3C, 0x11C, 0x64, 0x4C, 0x7A4));
             }
 
             this.AddRange(this.GetType().GetProperties()
@@ -272,7 +277,8 @@ namespace LiveSplit.MirrorsEdgeLRT
 
         private bool timerStarted = false;
         private bool menuWhileStreaming = false;
-        
+        private bool isRunning = false;
+
         private GameVersion version;
 
         private Process game;
@@ -288,8 +294,6 @@ namespace LiveSplit.MirrorsEdgeLRT
         private MemoryWatcher<int> EntryGateBtnCount;
         private MemoryWatcher<int> ExitGateBtnCount;
         private MemoryWatcher<int> ExitBtnCount;
-
-        private bool isRunning = false;
 
         public GameMemory(MirrorsEdgeLRTSettings Settings, TimerModel _timer)
         {
@@ -309,7 +313,9 @@ namespace LiveSplit.MirrorsEdgeLRT
 
             TimedTraceListener.Instance.UpdateCount++;
 
+            TimeStamp StartTime = TimeStamp.Now;
             _data.UpdateAll(_process);
+            Debug.WriteLine("Time to update all: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
 
             bool bIgnoreMoveInput = (_data.IgnoreMoveInput.Current & 1) != 0;
             bool bIgnoreButtonInput = (_data.IgnoreButtonInput.Current & 1) != 0;
@@ -326,9 +332,10 @@ namespace LiveSplit.MirrorsEdgeLRT
             }
 
             /* -- Starting -- */
-            if (UserSettings.Category != 4)
+            if (UserSettings.Category != 2)
             {
-                if (_data.PersistentLevel.Current == "tutorial_p" && _data.PlayerPosZ.Current < 5854f && _data.PlayerPosZ.Current > 5800f && !timerStarted)
+                /* Full Game - Starting when player skips first cutscene */
+                if (_data.PersistentLevel.Current == "tutorial_p" && _data.PlayerPos.Current.Z < 5854f && _data.PlayerPos.Current.Z > 5800f && !timerStarted)
                 {
                     this.OnStart?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("starting timer");
@@ -336,7 +343,8 @@ namespace LiveSplit.MirrorsEdgeLRT
             } 
             else
             {
-                if (_data.ActiveTTStretch.Current == UserSettings.StartTT && bIgnoreMoveInput && bIgnoreLookInput && (int)_data.PlayerPosX.Current == (int)TTCoords[UserSettings.StartTT] && !timerStarted)
+                /* 69 Stars - Starting when player is at starting checkpoint of selected TT */
+                if (_data.ActiveTTStretch.Current == UserSettings.StartTT && bIgnoreMoveInput && bIgnoreLookInput && (int)_data.PlayerPos.Current.X == (int)TTCoords[UserSettings.StartTT] && !timerStarted)
                 {
                     this.OnStart?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("starting timer");
@@ -344,8 +352,9 @@ namespace LiveSplit.MirrorsEdgeLRT
             }
 
             /* -- Resetting -- */
-            if (UserSettings.Category != 4)
+            if (UserSettings.Category != 2)
             {
+                /* Full Game - Resetting when switching from menu to tutorial_p (first cutscene) */
                 if (_data.PersistentLevel.Old == "TdMainMenu" && _data.PersistentLevel.Current == "tutorial_p")
                 {
                     timerStarted = false;
@@ -355,6 +364,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             } 
             else
             {
+                /* 69 Stars - Resetting when switching from menu to selected starting TT */
                 if (_data.PersistentLevel.Old == "TdMainMenu" && _data.PersistentLevel.Current == TTNames[UserSettings.StartTT])
                 {
                     timerStarted = false;
@@ -366,10 +376,11 @@ namespace LiveSplit.MirrorsEdgeLRT
             if (timerStarted)
             {
                 /* -- Distance Checks -- */
-                if (UserSettings.Category != 4)
+                if (UserSettings.Category != 2)
                 {
-                    Vector3f PlayerPos = new Vector3f(_data.PlayerPosX.Current, _data.PlayerPosY.Current, _data.PlayerPosZ.Current);
+                    Vector3f PlayerPos = new Vector3f(_data.PlayerPos.Current.X, _data.PlayerPos.Current.Y, _data.PlayerPos.Current.Z);
 
+                    /* Checking if player has come close to the entrance gate button */
                     if (_data.RespawnCP.Current == "Gate1")
                     {
                         if (PlayerPos.Distance(SDEntryBtn) < 130f)
@@ -377,9 +388,10 @@ namespace LiveSplit.MirrorsEdgeLRT
                             SDEntranceGateBtnHit = true;
                         }
                     }
+                    /* Checking if player has come close to the exit gate button */
                     else if (_data.RespawnCP.Current == "Waterfall")
                     {
-                        if (PlayerPos.Distance(SDExitGate) < 130f && _data.PlayerPosY.Current < -10350f)
+                        if (PlayerPos.Distance(SDExitGate) < 130f && _data.PlayerPos.Current.Y < -10350f)
                         {
                             SDExitGateBtnHit = true;
                         }
@@ -392,10 +404,10 @@ namespace LiveSplit.MirrorsEdgeLRT
                 }
 
                 /* -- Splitting -- */
-                if (UserSettings.Category != 4)
+                if (UserSettings.Category != 2)
                 {
                     /* -- Full Game -- */
-                    if (_data.PersistentLevel.Current != _data.PersistentLevel.Old && levels[_data.PersistentLevel.Current] > levels[_data.PersistentLevel.Old] && _data.PersistentLevel.Old != "tutorial_p" && _data.PersistentLevel.Old != "TdMainMenu")
+                    if (_data.PersistentLevel.Current != _data.PersistentLevel.Old && levels[_data.PersistentLevel.Current] > levels[_data.PersistentLevel.Old] && _data.PersistentLevel.Old != "tutorial_p" && _data.PersistentLevel.Old != "TdMainMenu" && !UserSettings.ChapterSplitDisabled)
                     {
                         this.OnSplit?.Invoke(this, EventArgs.Empty);
                         Debug.WriteLine("chapter split");
@@ -418,8 +430,18 @@ namespace LiveSplit.MirrorsEdgeLRT
                         SDExitBtnHit = false;
                         SDExitHasSplit = false;
                     }
+
+                    /* Bag Splits for 100% */
+                    if (UserSettings.Category == 1)
+                    {
+                        if (_data.BagCounter.Current > _data.BagCounter.Old)
+                        {
+                            this.OnSplit?.Invoke(this, EventArgs.Empty);
+                            Debug.WriteLine("bag split");
+                        }
+                    }
                 }
-                else
+                else if (UserSettings.Category == 2)
                 {
                     /* -- 69 Stars -- */
                     if (_data.CurrentCP.Current > _data.CurrentCP.Old)
@@ -459,7 +481,8 @@ namespace LiveSplit.MirrorsEdgeLRT
                     }
                 }
 
-                if (UserSettings.Category != 4)
+                /* Checking sub-level loading flags */
+                if (UserSettings.Category != 2)
                 {
                     if (_data.PersistentLevel.Current != "TdMainMenu" && _data.PersistentLevel.Current != null)
                     {
@@ -494,8 +517,9 @@ namespace LiveSplit.MirrorsEdgeLRT
                     }
                 }
 
-                if (UserSettings.Category != 4)
+                if (UserSettings.Category != 2)
                 {
+                    /* Checking for player pause during level streaming */
                     if (_data.IsPauseMenu.Current == 1 && SubLevelStates.Contains(true))
                     {
                         menuWhileStreaming = true;
@@ -506,8 +530,8 @@ namespace LiveSplit.MirrorsEdgeLRT
                     }
                 }
 
-                /* Button Scanning */
-                if (UserSettings.Category != 4)
+                /* Stormdrains Button Scanning */
+                if (UserSettings.Category != 2)
                 {
                     /*if (_data.RespawnCP.Current == "Waterfall" && SDExitGateBtnPtr == IntPtr.Zero && levels[_data.PersistentLevel.Current] == 2)
                     {
@@ -564,14 +588,6 @@ namespace LiveSplit.MirrorsEdgeLRT
                     } 
                 }
 
-                if (_data.RespawnCP.Current == "Boat_Truckride" && _data.ObjectPosZ.Current == 64 && !isRunning)
-                {
-                    isRunning = true;
-                    System.Timers.Timer truckTimer = new System.Timers.Timer(50000);
-                    truckTimer.Elapsed += TruckTimer_Elapsed;
-                    truckTimer.Enabled = true;
-                }
-
                 /* -- Removing Loads -- */
                 if (_data.IsLoading.Current == 0)
                 {
@@ -598,7 +614,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("menu blocked by save icon");
                 }
-                else if (UserSettings.Category != 4 && bIgnoreMoveInput && bIgnoreLookInput && bIgnoreButtonInput && _data.MoveState.Current != 38 && _data.RespawnCP.Current != "Training_area_after_cs" && _data.RespawnCP.Current != "Office")
+                else if (UserSettings.Category != 2 && bIgnoreMoveInput && bIgnoreLookInput && bIgnoreButtonInput && _data.MoveState.Current != 38 && _data.RespawnCP.Current != "Training_area_after_cs" && _data.RespawnCP.Current != "Office")
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("block while loading");
@@ -608,24 +624,25 @@ namespace LiveSplit.MirrorsEdgeLRT
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("player paused during level streaming");
                 }
-                else if (UserSettings.Category != 4 && (
-                    // Checkpoints at the end of chapters
+                else if (UserSettings.Category != 2 && (
+                    /* Checkpoints at the end of chapters */
                     (_data.RespawnCP.Current == "SWAT_Response2" && _data.IsSaving.Current == 1 && _data.ObjectPosZ.Current > 4641) || // Prologue
-                    (_data.RespawnCP.Current == "Plaza" && _data.IsSaving.Current == 1 && _data.PlayerPosZ.Current < -2466) || // Chapter 1
-                    (_data.RespawnCP.Current == "Boss_checkpoint1" && _data.IsSaving.Current == 1 && _data.PlayerPosX.Current == 20804.95117f) || // Chapter 2
+                    (_data.RespawnCP.Current == "Plaza" && _data.IsSaving.Current == 1 && _data.PlayerPos.Current.Z < -2466) || // Chapter 1
+                    (_data.RespawnCP.Current == "Boss_checkpoint1" && _data.IsSaving.Current == 1 && _data.PlayerPos.Current.X == 20804.95117f) || // Chapter 2
                     (_data.RespawnCP.Current.Contains("SP03_Plaza_") && _data.IsSaving.Current == 1 && bIgnoreButtonInput) || // Chapter 3
                     (_data.RespawnCP.Current == "Train_Ride_End" && _data.IsSaving.Current == 1 && _data.ObjectPosZ.Current == -1728) || // Chapter 4
-                    (_data.RespawnCP.Current == "LastCP" && _data.IsSaving.Current == 1 && _data.PlayerPosX.Current == -51617.66406f) || // Chapter 5
+                    (_data.RespawnCP.Current == "LastCP" && _data.IsSaving.Current == 1 && _data.PlayerPos.Current.X == -51617.66406f) || // Chapter 5
                     (_data.RespawnCP.Current == "Pursuit_chase_end" && _data.IsSaving.Current == 1 && _data.ObjectPosZ.Current > 1252) || // Chapter 6
-                    (_data.RespawnCP.Current == "Celeste" && _data.IsSaving.Current == 1 && _data.PlayerPosZ.Current == 349.1499939f) || // Chapter 7
+                    (_data.RespawnCP.Current == "Celeste" && _data.IsSaving.Current == 1 && _data.PlayerPos.Current.Z == 349.1499939f) || // Chapter 7
                     (_data.RespawnCP.Current == "Atrium_soft_cp" && _data.IsSaving.Current == 1 && bIgnoreButtonInput) // Chapter 8
                         ))
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("end of chapter save icon");
                 }
-                else if (UserSettings.Category != 4 && (
-                    (_data.RespawnCP.Current == "Office" && SubLevelStates.Contains(true) && _data.PlayerPosZ.Current > 12381) || // 1A
+                else if (UserSettings.Category != 2 && (
+                    /* Level Streaming (mostly elevators, some other areas) */
+                    (_data.RespawnCP.Current == "Office" && SubLevelStates.Contains(true) && _data.PlayerPos.Current.Z > 12381) || // 1A
                     (_data.RespawnCP.Current == "Elev_R1-St1" && SubLevelStates.Contains(true) && _data.ObjectPosZ.Current > 4159) || // 1D
                     ((_data.RespawnCP.Current == "Sluice_Out_RoofUp" || _data.RespawnCP.Current == "ChaseJK") && SubLevelStates.Contains(true) && _data.ObjectPosZ.Current > 4159 && !bAllowMoveChange) || // 2D
                     (_data.RespawnCP.Current == "JKfight" && _data.RespawnCP.Current != "after_loading_bo" && SubLevelStates.Contains(true)) || // 2G
@@ -647,10 +664,19 @@ namespace LiveSplit.MirrorsEdgeLRT
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("level streaming blocking progress");
                 }
+                /* level streaming in 9E hallway */
                 else if (_data.RespawnCP.Current == "subway_roof-mill" && SubLevelStates.Contains(true) && _data.PersistentLevel.Current != "TdMainMenu")
                 {
                     this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                     Debug.WriteLine("9E hallway load");
+                }
+                /* level streaming after 7A truck ride */
+                else if (_data.RespawnCP.Current == "Boat_Truckride" && _data.ObjectPosZ.Current == 64 && !isRunning)
+                {
+                    isRunning = true;
+                    System.Timers.Timer truckTimer = new System.Timers.Timer(50000);
+                    truckTimer.Elapsed += TruckTimer_Elapsed;
+                    truckTimer.Enabled = true;
                 }
                 else if (_data.RespawnCP.Current == "Boat_Truckride" && _data.ObjectPosZ.Current == 64 && Truck50Elapsed && SubLevelStates.Contains(true))
                 {
@@ -658,6 +684,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                     Debug.WriteLine("still level streaming after 50s in truck");
                 }
                 else
+                /* loading is not blocking progression */
                 {
                     this.OnLoadFalse?.Invoke(this, EventArgs.Empty);
                 }
@@ -668,6 +695,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             }
         }
 
+        /* timer callback function for 7a truck ride level streaming */
         private void TruckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             isRunning = false;
@@ -676,7 +704,7 @@ namespace LiveSplit.MirrorsEdgeLRT
 
         bool TryGetGameProcess()
         {
-            /* this function hooks the game process and checks which version is running */
+            /* hooking the game process and checking the version */
             game = Process.GetProcesses().FirstOrDefault(p => p.ProcessName.ToLower() == "mirrorsedge"
                 && !p.HasExited && !_ignorePIDs.Contains(p.Id));
             if (game == null)
@@ -709,7 +737,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             return true;
         }
 
-        /* these functions perform signature scans for the buttons in stormdrains (entrance, exit, top of exit) */
+        /* signature scans for the buttons in stormdrains (entrance, exit, top of exit), only exit is currently used*/
         IntPtr ExitGateScan()
         {
             IntPtr exitGateBtn = IntPtr.Zero;
@@ -803,7 +831,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             return exitBtn;
         }
 
-        /* this functions starts the above 3 as a background task when needed so they don't make the timer freeze while scanning */
+        /* handler to start signature scans as background tasks to avoid freezing the timer */
         private async void StartBGTask(int btnSelect)
         {
             if (btnSelect == 3 && SDExitBtnPtr == IntPtr.Zero && !isRunning)
@@ -846,6 +874,6 @@ namespace LiveSplit.MirrorsEdgeLRT
     {
         Steam,
         Reloaded,
-        Origin,
+        Origin
     }
 }

@@ -23,9 +23,7 @@ namespace LiveSplit.MirrorsEdgeLRT
 
         public int StarsRequired { get; set; }
 
-        public bool BagSplit { get; set; }
-
-        public bool ChapterSplit100 { get; set; }
+        public bool ChapterSplitDisabled { get; set; }
 
         public int StartTTInd { get; set; }
         public int StartTT { get; set; }
@@ -34,31 +32,31 @@ namespace LiveSplit.MirrorsEdgeLRT
         {
             InitializeComponent();
 
-            catSelect.Items.AddRange(new object[] { "Any%", "Glitchless", "Inbounds", "100%", "69 stars" });
+            /* Items for Dropdowns */
+            catSelect.Items.AddRange(new object[] { "Full Game", "100% Bag Splits", "69 Stars" });
             starSelect.Items.AddRange(new object[] { "None", "1 Star", "2 Stars", "3 Stars" });
             startTTSelect.Items.AddRange(new object[] { "Playground One", "Playground Two", "Playground Three", "Edge", "Arland", "Flight",
                 "Chase", "Stromdrains One", "Stormdrains Two", "Stormdrains Three", "Heat", "Burfield", "Cranes One", "Cranes Two", "New Eden",
                 "Factory", "Office", "Convoy One", "Convoy Two", "Atrium One", "Atrium Two", "Shard One", "Shard Two" });
 
-            // default
+            /* Default Settings */
             this.AutoStart = true;
             this.AutoSplit = true;
             this.AutoReset = true;
             this.SDSplit = false;
             this.Category = 0;
             this.StarsRequired = 0;
-            this.BagSplit = false;
-            this.ChapterSplit100 = false;
+            this.ChapterSplitDisabled = false;
             this.StartTT = 15;
 
+            /* DataBindings for each setting */
             this.chkAutoStart.DataBindings.Add("Checked", this, "AutoStart", false, DataSourceUpdateMode.OnPropertyChanged);
             this.chkAutoSplit.DataBindings.Add("Checked", this, "AutoSplit", false, DataSourceUpdateMode.OnPropertyChanged);
             this.chkAutoReset.DataBindings.Add("Checked", this, "AutoReset", false, DataSourceUpdateMode.OnPropertyChanged);
             this.chkSDSplit.DataBindings.Add("Checked", this, "SDSplit", false, DataSourceUpdateMode.OnPropertyChanged);
             this.catSelect.DataBindings.Add("SelectedIndex", this, "Category", false, DataSourceUpdateMode.OnPropertyChanged);
             this.starSelect.DataBindings.Add("SelectedIndex", this, "StarsRequired", false, DataSourceUpdateMode.OnPropertyChanged);
-            this.chkBagSplit.DataBindings.Add("Checked", this, "BagSplit", false, DataSourceUpdateMode.OnPropertyChanged);
-            this.chkChapterSplit100.DataBindings.Add("Checked", this, "ChapterSplit100", false, DataSourceUpdateMode.OnPropertyChanged);
+            this.chkChapterSplit100.DataBindings.Add("Checked", this, "ChapterSplitDisabled", false, DataSourceUpdateMode.OnPropertyChanged);
             this.startTTSelect.DataBindings.Add("SelectedIndex", this, "StartTTInd", false, DataSourceUpdateMode.OnPropertyChanged);
         }
 
@@ -71,8 +69,7 @@ namespace LiveSplit.MirrorsEdgeLRT
             SDSplit = SettingsHelper.ParseBool(element["SDSplit"]);
             Category = SettingsHelper.ParseInt(element["Category"]);
             StarsRequired = SettingsHelper.ParseInt(element["StarsRequired"]);
-            BagSplit = SettingsHelper.ParseBool(element["BagSplit"]);
-            ChapterSplit100 = SettingsHelper.ParseBool(element["ChapterSplit100"]);
+            ChapterSplitDisabled = SettingsHelper.ParseBool(element["ChapterSplit100"]);
             StartTT = SettingsHelper.ParseInt(element["StartTT"]);
             StartTTInd = SettingsHelper.ParseInt(element["StartTTInd"]);
         }
@@ -97,28 +94,25 @@ namespace LiveSplit.MirrorsEdgeLRT
                 SettingsHelper.CreateSetting(document, parent, "SDSplit", SDSplit) ^
                 SettingsHelper.CreateSetting(document, parent, "Category", Category) ^
                 SettingsHelper.CreateSetting(document, parent, "StarsRequired", StarsRequired) ^
-                SettingsHelper.CreateSetting(document, parent, "BagSplit", BagSplit) ^
-                SettingsHelper.CreateSetting(document, parent, "ChapterSplit100", ChapterSplit100) ^
+                SettingsHelper.CreateSetting(document, parent, "ChapterSplit100", ChapterSplitDisabled) ^
                 SettingsHelper.CreateSetting(document, parent, "StartTT", StartTT) ^
                 SettingsHelper.CreateSetting(document, parent, "StartTTInd", StartTTInd);
         }
 
         private void catSelect_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (catSelect.SelectedIndex == 4)
+            /* Making 69 Stars / 100% specific settings visible */
+            if (catSelect.SelectedIndex == 2)
             {
-                
                 labelStars.Visible = true;
                 starSelect.Visible = true;
                 startTTSelect.Visible = true;
                 startTTLbl.Visible = true;
 
-                chkBagSplit.Visible = false;
                 chkChapterSplit100.Visible = false;
             } 
-            else if (catSelect.SelectedIndex == 3)
+            else if (catSelect.SelectedIndex == 1)
             {
-                chkBagSplit.Visible = true;
                 chkChapterSplit100.Visible = true;
 
                 labelStars.Visible = false;
@@ -128,7 +122,6 @@ namespace LiveSplit.MirrorsEdgeLRT
             }
             else
             {
-                chkBagSplit.Visible = false;
                 chkChapterSplit100.Visible = false;
 
                 labelStars.Visible = false;
@@ -164,20 +157,16 @@ namespace LiveSplit.MirrorsEdgeLRT
             AutoStart = chkAutoStart.Checked;
         }
 
-        private void chkBagSplit_CheckedChanged(object sender, EventArgs e)
-        {
-            BagSplit = chkBagSplit.Checked;
-        }
-
         private void chkChapterSplit100_CheckedChanged(object sender, EventArgs e)
         {
-            ChapterSplit100 = chkChapterSplit100.Checked;
+            ChapterSplitDisabled = chkChapterSplit100.Checked;
         }
 
         private void startTTSelect_SelectedIndexChanged(object sender, EventArgs e)
         {
             StartTTInd = startTTSelect.SelectedIndex;
 
+            /* setting the StartTT value to the value the TT is assigned by the game for the tt stretch address */
             switch (StartTTInd)
             {
                 case 0:
