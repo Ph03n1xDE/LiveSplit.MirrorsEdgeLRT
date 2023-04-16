@@ -497,7 +497,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                         }
                     }
 
-                    for (int i = 0; i < SubLevelStates.Count; i++)
+                    Parallel.For(0, SubLevelStates.Count, i =>
                     {
                         switch (version)
                         {
@@ -513,8 +513,11 @@ namespace LiveSplit.MirrorsEdgeLRT
                         byte flags = SubLevelFlags.Deref<byte>(game);
                         bool isLoading = ((flags & 0x01) != 0x01 & (flags & 0x80) == 0x80) | ((flags & 0x01) == 0x01 & (flags & 0x80) != 0x80);
 
-                        SubLevelStates[i] = isLoading;
-                    }
+                        if (SubLevelStates[i] != isLoading)
+                        {
+                            SubLevelStates[i] = isLoading;
+                        }
+                    });
                 }
 
                 if (UserSettings.Category != 2)
