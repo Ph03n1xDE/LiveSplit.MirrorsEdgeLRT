@@ -8,6 +8,7 @@ using System.Timers;
 
 using LiveSplit.ComponentUtil;
 using LiveSplit.Model;
+using System.Runtime.InteropServices;
 
 namespace LiveSplit.MirrorsEdgeLRT
 {
@@ -28,24 +29,42 @@ namespace LiveSplit.MirrorsEdgeLRT
 
         public MemoryWatcher<byte> MoveState { get; }
         public MemoryWatcher<byte> AllowMoveChange { get; }
-        public MemoryWatcher<byte> IgnoreMoveInput { get; }
-        public MemoryWatcher<byte> IgnoreLookInput { get; }
+        public MemoryWatcher<PlayerInput> IgnorePlayerInput { get; }
         public MemoryWatcher<byte> IgnoreButtonInput { get; }
 
         public MemoryWatcher<float> ObjectPosZ { get; }
 
         /* 69 Stars Addresses */
-        public MemoryWatcher<int> TotalCPs { get; }
-        public MemoryWatcher<int> CurrentCP { get; }
+        public MemoryWatcher<TTCheckpoint> Checkpoint { get; }
         public MemoryWatcher<byte> ActiveTTStretch { get; }
         public MemoryWatcher<float> FinishedTime { get; }
-
-        public MemoryWatcher<float> ThreeStarTime { get; }
-        public MemoryWatcher<float> TwoStarTime { get; }
-        public MemoryWatcher<float> OneStarTime { get; }
+        public MemoryWatcher<TTStars> StarTime { get; }
 
         /* Bag Counter */
         public MemoryWatcher<int> BagCounter { get; }
+
+        /* Custom Structs */
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TTStars
+        {
+            public float Three { get; set; }
+            public float Two { get; set; }
+            public float One { get; set; }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TTCheckpoint
+        {
+            public int TotalCPs { get; set; }
+            public int CurrentCP { get; set; }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PlayerInput
+        {
+            public byte Move { get; set; }
+            public byte Look { get; set; }
+        }
 
         public GameData(GameVersion version)
         {
@@ -68,21 +87,16 @@ namespace LiveSplit.MirrorsEdgeLRT
 
                 this.MoveState = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0x500));
                 this.AllowMoveChange = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0x41D));
-                this.IgnoreMoveInput = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2FD));
-                this.IgnoreLookInput = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2FE));
+                this.IgnorePlayerInput = new MemoryWatcher<PlayerInput>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2FD));
                 this.IgnoreButtonInput = new MemoryWatcher<byte>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x575));
 
                 this.ObjectPosZ = new MemoryWatcher<float>(new DeepPointer(0x01C553D0, 0xCC, 0x1CC, 0x2F8, 0x74, 0xF0));
 
                 /* 69 Stars Pointers */
-                this.CurrentCP = new MemoryWatcher<int>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x3D4));
-                this.TotalCPs = new MemoryWatcher<int>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x3D0));
+                this.Checkpoint = new MemoryWatcher<TTCheckpoint>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x3D0));
                 this.ActiveTTStretch = new MemoryWatcher<byte>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x3F9));
                 this.FinishedTime = new MemoryWatcher<float>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x424));
-
-                this.ThreeStarTime = new MemoryWatcher<float>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x408));
-                this.TwoStarTime = new MemoryWatcher<float>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x40C));
-                this.OneStarTime = new MemoryWatcher<float>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x410));
+                this.StarTime = new MemoryWatcher<TTStars>(new DeepPointer(0x01BFBCA4, 0x50, 0x1E0, 0x318, 0x408));
 
                 /* Bag Counter */
                 this.BagCounter = new MemoryWatcher<int>(new DeepPointer(0x01B73F1C, 0x64, 0x4C, 0x7A4));
@@ -106,21 +120,16 @@ namespace LiveSplit.MirrorsEdgeLRT
 
                 this.MoveState = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x500));
                 this.AllowMoveChange = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x41D));
-                this.IgnoreMoveInput = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2FD));
-                this.IgnoreLookInput = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2FE));
+                this.IgnorePlayerInput = new MemoryWatcher<PlayerInput>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2FD));
                 this.IgnoreButtonInput = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x575));
 
                 this.ObjectPosZ = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x74, 0xF0));
 
                 /* 69 Stars Pointers */
-                this.CurrentCP = new MemoryWatcher<int>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x3D4));
-                this.TotalCPs = new MemoryWatcher<int>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x3D0));
+                this.Checkpoint = new MemoryWatcher<TTCheckpoint>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x3D0));
                 this.ActiveTTStretch = new MemoryWatcher<byte>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x3F9));
                 this.FinishedTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x424));
-
-                this.ThreeStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x408));
-                this.TwoStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x40C));
-                this.OneStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x410));
+                this.StarTime = new MemoryWatcher<TTStars>(new DeepPointer(0x01C14D5C, 0x54, 0x1E0, 0x318, 0x408));
 
                 /* Bag Counter */
                 this.BagCounter = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0x194, 0x128, 0x3C, 0x11C, 0x64, 0x4C, 0x7A4));
@@ -144,21 +153,16 @@ namespace LiveSplit.MirrorsEdgeLRT
 
                 this.MoveState = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x500));
                 this.AllowMoveChange = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x41D));
-                this.IgnoreMoveInput = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2FD));
-                this.IgnoreLookInput = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2FE));
+                this.IgnorePlayerInput = new MemoryWatcher<PlayerInput>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2FD));
                 this.IgnoreButtonInput = new MemoryWatcher<byte>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x575));
 
                 this.ObjectPosZ = new MemoryWatcher<float>(new DeepPointer(0x01C6E50C, 0xCC, 0x1CC, 0x2F8, 0x74, 0xF0));
 
                 /* 69 Stars Pointers */
-                this.CurrentCP = new MemoryWatcher<int>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x3D4));
-                this.TotalCPs = new MemoryWatcher<int>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x3D0));
+                this.Checkpoint = new MemoryWatcher<TTCheckpoint>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x3D0));
                 this.ActiveTTStretch = new MemoryWatcher<byte>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x3F9));
                 this.FinishedTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x424));
-
-                this.ThreeStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x408));
-                this.TwoStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x40C));
-                this.OneStarTime = new MemoryWatcher<float>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x410));
+                this.StarTime = new MemoryWatcher<TTStars>(new DeepPointer(0x01C14D64, 0x54, 0x1E0, 0x318, 0x408));
 
                 /* Bag Counter */
                 this.BagCounter = new MemoryWatcher<int>(new DeepPointer(0x01C6EFE0, 0x194, 0x128, 0x3C, 0x11C, 0x64, 0x4C, 0x7A4));
@@ -313,13 +317,13 @@ namespace LiveSplit.MirrorsEdgeLRT
 
             TimedTraceListener.Instance.UpdateCount++;
 
-            TimeStamp StartTime = TimeStamp.Now;
+            //TimeStamp StartTime = TimeStamp.Now;
             _data.UpdateAll(_process);
-            Debug.WriteLine("Time to update all: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
+            //Debug.WriteLine("Time to update all: " + (TimeStamp.Now - StartTime).TotalMilliseconds + "ms");
 
-            bool bIgnoreMoveInput = (_data.IgnoreMoveInput.Current & 1) != 0;
+            bool bIgnoreMoveInput = (_data.IgnorePlayerInput.Current.Move & 1) != 0;
+            bool bIgnoreLookInput = (_data.IgnorePlayerInput.Current.Look & 1) != 0;
             bool bIgnoreButtonInput = (_data.IgnoreButtonInput.Current & 1) != 0;
-            bool bIgnoreLookInput = (_data.IgnoreLookInput.Current & 1) != 0;
             bool bAllowMoveChange = (_data.AllowMoveChange.Current & (1 << 4)) != 0;
 
             if (timer.CurrentState.CurrentAttemptDuration == TimeSpan.Zero)
@@ -444,9 +448,9 @@ namespace LiveSplit.MirrorsEdgeLRT
                 else if (UserSettings.Category == 2)
                 {
                     /* -- 69 Stars -- */
-                    if (_data.CurrentCP.Current > _data.CurrentCP.Old)
+                    if (_data.Checkpoint.Current.CurrentCP > _data.Checkpoint.Old.CurrentCP)
                     {
-                        if (_data.CurrentCP.Current == _data.TotalCPs.Current)
+                        if (_data.Checkpoint.Current.CurrentCP == _data.Checkpoint.Current.TotalCPs)
                         {
                             if (UserSettings.StarsRequired == 0)
                             {
@@ -455,7 +459,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                             }
                             else if (UserSettings.StarsRequired == 1)
                             {
-                                if (_data.OneStarTime.Current > Math.Round(_data.FinishedTime.Current, 2))
+                                if (_data.StarTime.Current.One > Math.Round(_data.FinishedTime.Current, 2))
                                 {
                                     this.OnSplit?.Invoke(this, EventArgs.Empty);
                                     Debug.WriteLine("tt split");
@@ -463,7 +467,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                             }
                             else if (UserSettings.StarsRequired == 2)
                             {
-                                if (_data.TwoStarTime.Current > Math.Round(_data.FinishedTime.Current, 2))
+                                if (_data.StarTime.Current.Two > Math.Round(_data.FinishedTime.Current, 2))
                                 {
                                     this.OnSplit?.Invoke(this, EventArgs.Empty);
                                     Debug.WriteLine("tt split");
@@ -471,7 +475,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                             }
                             else if (UserSettings.StarsRequired == 3)
                             {
-                                if (_data.ThreeStarTime.Current > Math.Round(_data.FinishedTime.Current, 2))
+                                if (_data.StarTime.Current.Three > Math.Round(_data.FinishedTime.Current, 2))
                                 {
                                     this.OnSplit?.Invoke(this, EventArgs.Empty);
                                     Debug.WriteLine("tt split");
