@@ -497,10 +497,6 @@ namespace LiveSplit.MirrorsEdgeLRT
                         {
                             menuWhileStreaming = true;
                         }
-                        else
-                        {
-                            menuWhileStreaming = false;
-                        }
                     }
                     else if (_data.IsPauseMenu.Current == 0)
                     {
@@ -632,7 +628,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                     (_data.RespawnCP.Current == "combat_3" && !bAllowMoveChange) || // 8B
                     (_data.RespawnCP.Current == "scraper_before_lobby" && _data.ObjectPosZ.Current > 32 && !bAllowMoveChange) || // 9B
                     ((_data.RespawnCP.Current == "Scraper_Inside_elevator_lobby" || _data.RespawnCP.Current == "Elevator_shaft") && _data.IsPauseMenu.Current == 1) || // 9C
-                    (_data.RespawnCP.Current == "Scraper_Inside_elevator_lobby" && _data.ObjectPosZ.Current > 13167.99f) ||
+                    (_data.RespawnCP.Current == "Scraper_Inside_elevator_lobby" && _data.ObjectPosZ.Current > 13167.99f && !bAllowMoveChange) ||
                     (_data.RespawnCP.Current == "Gate1" && _data.MoveState.Current != 72 && SDEntranceGateBtnHit) || // Stormdrains Entrance Load
                     (_data.RespawnCP.Current == "Waterfall" && SDExitGateBtnHit) || // Stormdrains Exit Load
                     (_data.RespawnCP.Current == "Platform_fight" && _data.IsPauseMenu.Current == 1) || // Chapter 4 Skip Load
@@ -652,7 +648,7 @@ namespace LiveSplit.MirrorsEdgeLRT
                 /* level streaming in 9E hallway */
                 else if (_data.RespawnCP.Current == "subway_roof-mill" && _data.PersistentLevel.Current != "TdMainMenu")
                 {
-                    if (CheckLevelStreaming())
+                    if (CheckLevelStreaming() && bAllowMoveChange)
                     {
                         this.OnLoadTrue?.Invoke(this, EventArgs.Empty);
                         Debug.WriteLine("9E hallway load");
